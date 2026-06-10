@@ -2,6 +2,7 @@
 
 import { useActionState } from "react";
 import Link from "next/link";
+import { toast } from "sonner";
 import { signInWithEmail } from "@/lib/actions/auth";
 import { Input } from "@/components/ui/Input";
 import { Button } from "@/components/ui/Button";
@@ -14,7 +15,11 @@ interface LoginFormProps {
 export function LoginForm({ defaultEmail, infoMessage }: LoginFormProps = {}) {
   const [state, formAction, pending] = useActionState(
     async (_prev: { error?: string } | null, formData: FormData) => {
-      return (await signInWithEmail(formData)) ?? null;
+      const result = await signInWithEmail(formData);
+      if (result?.error) {
+        toast.error(result.error, { duration: 8000 });
+      }
+      return result ?? null;
     },
     null
   );

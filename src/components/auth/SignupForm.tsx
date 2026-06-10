@@ -2,6 +2,7 @@
 
 import { useActionState } from "react";
 import Link from "next/link";
+import { toast } from "sonner";
 import { signUpWithEmail } from "@/lib/actions/auth";
 import { Input } from "@/components/ui/Input";
 import { Button } from "@/components/ui/Button";
@@ -12,7 +13,11 @@ export function SignupForm() {
       _prev: { error?: string; success?: boolean; message?: string } | null,
       formData: FormData
     ) => {
-      return (await signUpWithEmail(formData)) ?? null;
+      const result = await signUpWithEmail(formData);
+      if (result?.error) {
+        toast.error(result.error, { duration: 8000 });
+      }
+      return result ?? null;
     },
     null
   );
@@ -36,6 +41,12 @@ export function SignupForm() {
           Password
         </label>
         <Input id="password" name="password" type="password" required minLength={6} />
+      </div>
+      <div>
+        <label htmlFor="confirmPassword" className="mb-1.5 block text-sm text-goal-muted">
+          Confirm password
+        </label>
+        <Input id="confirmPassword" name="confirmPassword" type="password" required minLength={6} />
       </div>
 
       {state?.error && (

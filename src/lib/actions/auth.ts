@@ -4,6 +4,22 @@ import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { signInSchema, signUpSchema } from "@/lib/validations";
 
+function getFriendlyError(originalMessage: string): string {
+  const msg = originalMessage.toLowerCase();
+
+  // Supabase free tier email / auth rate limits
+  if (
+    msg.includes("rate limit") ||
+    msg.includes("too many") ||
+    (msg.includes("email") && msg.includes("limit")) ||
+    msg.includes("exceeded")
+  ) {
+    return "Limit reached since it's open source, please try again later.";
+  }
+
+  return originalMessage;
+}
+
 export async function signInWithEmail(formData: FormData) {
   const parsed = signInSchema.safeParse({
     email: formData.get("email"),
@@ -20,7 +36,7 @@ export async function signInWithEmail(formData: FormData) {
   const { error } = await supabase.auth.signInWithPassword({ email, password });
 
   if (error) {
-    return { error: error.message };
+    return { error: getFriendlyError(error.message) };
   }
 
   redirect("/dashboard");
@@ -30,6 +46,7 @@ export async function signUpWithEmail(formData: FormData) {
   const parsed = signUpSchema.safeParse({
     email: formData.get("email"),
     password: formData.get("password"),
+    confirmPassword: formData.get("confirmPassword"),
     display_name: formData.get("display_name"),
   });
 
@@ -45,11 +62,12 @@ export async function signUpWithEmail(formData: FormData) {
     password,
     options: {
       data: { display_name: displayName },
+      emailRedirectTo: `${process.env.NEXT_PUBLIC_SITE_URL ?? "http://localhost:3000"}/auth/callback`,
     },
   });
 
   if (error) {
-    return { error: error.message };
+    return { error: getFriendlyError(error.message) };
   }
 
   // Supabase returns a user with no identities when the email is already registered
@@ -79,7 +97,7 @@ export async function signInWithGoogle() {
   });
 
   if (error) {
-    return { error: error.message };
+    return { error: getFriendlyError(error.message) };
   }
 
   if (data.url) {
