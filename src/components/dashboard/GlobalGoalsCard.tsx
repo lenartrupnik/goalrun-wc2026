@@ -3,22 +3,20 @@
 import { useEffect } from "react";
 import { Goal, RefreshCw } from "lucide-react";
 import { motion } from "framer-motion";
-import { useGlobalStats } from "@/lib/hooks/useGlobalStats";
 import { POLL_INTERVAL_MS, KM_PER_GOAL } from "@/lib/constants";
 import { formatRelative } from "@/lib/utils";
 import { Card } from "@/components/ui/Card";
 import type { GlobalStats } from "@/types/database";
 
 interface GlobalGoalsCardProps {
-  initial: GlobalStats;
+  stats: GlobalStats;
 }
 
-export function GlobalGoalsCard({ initial }: GlobalGoalsCardProps) {
-  const stats = useGlobalStats(initial);
+export function GlobalGoalsCard({ stats }: GlobalGoalsCardProps) {
 
-  // Dev-only fallback poll; production uses Vercel cron + Supabase Realtime
+  // Client polling (Vercel Hobby cannot run cron more than once/day)
+  // Server rate-limits external API calls; Supabase Realtime pushes updates to all users
   useEffect(() => {
-    if (process.env.NODE_ENV !== "development") return;
     const sync = () => fetch("/api/worldcup/sync").catch(() => {});
     sync();
     const id = setInterval(sync, POLL_INTERVAL_MS);
@@ -45,6 +43,13 @@ export function GlobalGoalsCard({ initial }: GlobalGoalsCardProps) {
           <Goal className="h-6 w-6 text-goal-gold" />
         </div>
       </div>
+
+      {stats.total_goals === 0 && (
+        <p className="mt-3 text-xs text-goal-muted">
+          Tournament hasn&apos;t started yet — goal counts will update live once
+          matches begin.
+        </p>
+      )}
 
       <div className="mt-4 space-y-2 text-sm">
         <div className="flex justify-between">

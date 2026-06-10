@@ -13,7 +13,7 @@ A production-ready, open-source running challenge app for FIFA World Cup 2026. F
 - **Dashboard** — Global goals counter, total km required, personal progress ring
 - **Log Run** — Quick form to record distance with confetti on success
 - **Realtime Leaderboard** — Rank, name, km run, % complete (Supabase Realtime)
-- **World Cup API** — Polls [worldcup26.ir](https://worldcup26.ir) every 2 minutes via Vercel Cron
+- **World Cup API** — Polls [worldcup26.ir](https://worldcup26.ir) via client-side sync (Vercel Hobby–compatible)
 - **Dark/green football theme** — Responsive, mobile-first, framer-motion animations
 
 ## Tech Stack
@@ -94,14 +94,15 @@ Fill in values from Supabase → **Project Settings** → **API**:
 
 ```env
 NEXT_PUBLIC_SUPABASE_URL=https://xxxxxxxxxxxx.supabase.co
-NEXT_PUBLIC_SUPABASE_ANON_KEY=your-anon-key-here
+NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY=your-anon-key-here
 SUPABASE_SERVICE_ROLE_KEY=your-service-role-key-here
 NEXT_PUBLIC_SITE_URL=http://localhost:3000
 WORLDCUP_API_URL=https://worldcup26.ir
-CRON_SECRET=your-random-secret-string
+CRON_SECRET=
 ```
 
 > **Never** expose `SUPABASE_SERVICE_ROLE_KEY` to the browser. It bypasses RLS.
+> `CRON_SECRET` is optional — only needed if you use an external cron service (see below).
 
 ### 7. Run locally
 
@@ -117,19 +118,40 @@ Open [http://localhost:3000](http://localhost:3000).
 curl http://localhost:3000/api/worldcup/sync
 ```
 
-In development, the sync endpoint works without `CRON_SECRET`. In production, it requires `Authorization: Bearer <CRON_SECRET>`.
-
 ## World Cup API Integration
 
 The app uses the free open-source [World Cup 2026 API](https://worldcup26.ir) by [rezarahiminia/worldcup2026](https://github.com/rezarahiminia/worldcup2026).
 
-### How it works
+### How it works (Vercel Hobby–compatible)
 
-1. **Vercel Cron** calls `GET /api/worldcup/sync` every 2 minutes (`vercel.json`)
-2. The route fetches `https://worldcup26.ir/get/games` (all 104 matches)
-3. Total goals = sum of `parseInt(home_score) + parseInt(away_score)` across all games
-4. Results are written to `global_stats` via service-role client
-5. All clients receive updates via **Supabase Realtime** on `global_stats`
+> **Vercel Hobby limit:** Cron jobs can only run **once per day** (not every 2 minutes).
+> This app does **not** use Vercel Cron — it uses client polling instead.
+
+1. **Dashboard clients** call `GET /api/worldcup/sync` every 90 seconds
+2. The server **rate-limits** external API calls (max once per 90s globally)
+3. The route fetches `https://worldcup26.ir/get/games` (all 104 matches)
+4. Total goals = sum of `parseInt(home_score) + parseInt(away_score)` across all games
+5. Results are written to `global_stats` via service-role client
+6. All users receive updates via **Supabase Realtime** on `global_stats`
+
+### Optional: external cron (Pro plan or free services)
+
+If you upgrade to **Vercel Pro**, you can add a cron to `vercel.json`:
+
+```json
+{
+  "crons": [{ "path": "/api/worldcup/sync", "schedule": "*/2 * * * *" }]
+}
+```
+
+Or use a free external cron (e.g. [cron-job.org](https://cron-job.org)) to hit:
+
+```
+GET https://your-app.vercel.app/api/worldcup/sync
+Authorization: Bearer <CRON_SECRET>
+```
+
+Set `CRON_SECRET` in Vercel env vars. Authorized cron requests bypass the 90s rate limit.
 
 ### API reference
 
@@ -203,14 +225,14 @@ Returns: `rank`, `user_id`, `name`, `km_run`, `percent_complete`, `wc_goal_targe
 3. Framework preset: **Next.js**
 4. Add environment variables (same as `.env.local`, with production URLs):
    - `NEXT_PUBLIC_SUPABASE_URL`
-   - `NEXT_PUBLIC_SUPABASE_ANON_KEY`
+   - `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY` (or `NEXT_PUBLIC_SUPABASE_ANON_KEY`)
    - `SUPABASE_SERVICE_ROLE_KEY`
    - `NEXT_PUBLIC_SITE_URL` → `https://your-app.vercel.app`
-   - `CRON_SECRET` → generate a random string
    - `WORLDCUP_API_URL` → `https://worldcup26.ir`
+   - `CRON_SECRET` → optional (only for external cron)
 5. Deploy
 
-Vercel Cron (configured in `vercel.json`) runs `/api/worldcup/sync` every 2 minutes. Vercel automatically sends `Authorization: Bearer <CRON_SECRET>` when the env var is set.
+No Vercel Cron is required on the Hobby plan. Goal sync runs when users have the dashboard open.
 
 ### Update Supabase for production
 
@@ -224,8 +246,8 @@ Vercel Cron (configured in `vercel.json`) runs `/api/worldcup/sync` every 2 minu
 1. Visit your Vercel URL — landing page loads
 2. Sign up / log in → dashboard appears
 3. Log a run → appears on leaderboard
-4. Trigger sync: `curl -H "Authorization: Bearer <CRON_SECRET>" https://your-app.vercel.app/api/worldcup/sync`
-5. Goal count updates on dashboard via Realtime
+4. Open the dashboard — goal sync runs automatically every 90s
+5. Goal count updates via Supabase Realtime
 
 ## Project Structure
 

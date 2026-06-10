@@ -1,8 +1,1 @@
-{
-  "crons": [
-    {
-      "path": "/api/worldcup/sync",
-      "schedule": "*/2 * * * *"
-    }
-  ]
-}
+{}
