@@ -11,6 +11,7 @@ import { Card } from "@/components/ui/Card";
 export function LogRunForm() {
   const today = format(new Date(), "yyyy-MM-dd");
   const [showConfetti, setShowConfetti] = useState(false);
+  const [showSuccess, setShowSuccess] = useState(false);
 
   const [state, formAction, pending] = useActionState(
     async (_prev: { error?: string; success?: boolean } | null, formData: FormData) => {
@@ -21,11 +22,14 @@ export function LogRunForm() {
 
   useEffect(() => {
     if (state?.success) {
+      setShowSuccess(true);
       setShowConfetti(true);
       const timer = setTimeout(() => setShowConfetti(false), 3000);
       return () => clearTimeout(timer);
     }
   }, [state?.success]);
+
+  const dismissSuccess = () => setShowSuccess(false);
 
   return (
     <Card>
@@ -34,7 +38,11 @@ export function LogRunForm() {
         Record your distance after each workout
       </p>
 
-      <form action={formAction} className="mt-4 space-y-4">
+      <form
+        action={formAction}
+        className="mt-4 space-y-4"
+        onSubmit={() => setShowSuccess(false)}
+      >
         <div className="grid gap-4 sm:grid-cols-2">
           <div>
             <label htmlFor="distance_km" className="mb-1.5 block text-sm text-goal-muted">
@@ -49,6 +57,7 @@ export function LogRunForm() {
               max="999"
               required
               placeholder="5.0"
+              onChange={dismissSuccess}
             />
           </div>
           <div>
@@ -61,6 +70,7 @@ export function LogRunForm() {
               type="date"
               required
               defaultValue={today}
+              onChange={dismissSuccess}
             />
           </div>
         </div>
@@ -69,13 +79,18 @@ export function LogRunForm() {
           <label htmlFor="notes" className="mb-1.5 block text-sm text-goal-muted">
             Notes (optional)
           </label>
-          <Input id="notes" name="notes" placeholder="Morning jog around the park" />
+          <Input
+            id="notes"
+            name="notes"
+            placeholder="Morning jog around the park"
+            onChange={dismissSuccess}
+          />
         </div>
 
         {state?.error && (
           <p className="text-sm text-red-400">{state.error}</p>
         )}
-        {state?.success && (
+        {showSuccess && (
           <p className="text-sm text-pitch-300">Run logged successfully!</p>
         )}
 

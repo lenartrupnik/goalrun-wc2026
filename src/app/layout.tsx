@@ -12,6 +12,9 @@ export const metadata: Metadata = {
   title: `${APP_NAME} — ${APP_TAGLINE}`,
   description:
     "For every goal scored in FIFA World Cup 2026, run 1 km. Track progress and compete with friends on the realtime leaderboard.",
+  icons: {
+    icon: [{ url: "/icon.svg", type: "image/svg+xml" }],
+  },
   openGraph: {
     title: APP_NAME,
     description: APP_TAGLINE,

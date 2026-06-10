@@ -28,6 +28,7 @@ export async function StatsPreview() {
           <h2 className="text-center text-2xl font-bold">Live Tournament Stats</h2>
           <p className="mt-2 text-center text-sm text-goal-muted">
             Updated in realtime during World Cup 2026
+            {totalGoals === 0 && " — counts appear once matches begin"}
           </p>
         </MotionFadeIn>
 

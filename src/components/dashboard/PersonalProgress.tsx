@@ -21,6 +21,12 @@ export function PersonalProgress({ kmRun, totalGoals }: PersonalProgressProps) {
     <Card>
       <h2 className="text-lg font-semibold">My Progress</h2>
 
+      {totalGoals === 0 && (
+        <p className="mt-2 text-xs text-goal-muted">
+          Progress % updates once the tournament kicks off and goals are scored.
+        </p>
+      )}
+
       <div className="mt-6 flex flex-col items-center gap-6 sm:flex-row sm:items-start">
         <ProgressRing percent={percent} />
 

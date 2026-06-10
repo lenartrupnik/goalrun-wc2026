@@ -1,14 +1,14 @@
 "use client";
 
 import { Trophy, Medal, Award } from "lucide-react";
-import { useLeaderboard } from "@/lib/hooks/useLeaderboard";
 import { Card } from "@/components/ui/Card";
 import { formatKm, formatPercent } from "@/lib/utils";
 import type { LeaderboardEntry } from "@/types/database";
 
 interface LeaderboardProps {
-  initial: LeaderboardEntry[];
+  entries: LeaderboardEntry[];
   currentUserId: string;
+  totalGoals: number;
 }
 
 function RankIcon({ rank }: { rank: number }) {
@@ -22,9 +22,7 @@ function RankIcon({ rank }: { rank: number }) {
   );
 }
 
-export function Leaderboard({ initial, currentUserId }: LeaderboardProps) {
-  const entries = useLeaderboard(initial);
-
+export function Leaderboard({ entries, currentUserId, totalGoals }: LeaderboardProps) {
   return (
     <Card>
       <h2 className="text-lg font-semibold">Leaderboard</h2>
@@ -51,11 +49,12 @@ export function Leaderboard({ initial, currentUserId }: LeaderboardProps) {
                 <p className="truncate font-medium">
                   {entry.name}
                   {entry.user_id === currentUserId && (
-                    <span className="ml-2 text-xs text-pitch-300">(you)</span>
+                    <span className="ml-2 text-xs text-pitch-300"> (you)</span>
                   )}
                 </p>
                 <p className="text-sm text-goal-muted">
-                  {formatKm(entry.km_run)} · {formatPercent(entry.percent_complete)}
+                  {formatKm(entry.km_run)} ·{" "}
+                  {totalGoals === 0 ? "—" : formatPercent(entry.percent_complete)}
                 </p>
               </div>
               <div className="hidden sm:block w-24">

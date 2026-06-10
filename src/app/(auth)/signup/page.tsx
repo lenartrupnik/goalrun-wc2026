@@ -1,9 +1,20 @@
+import { redirect } from "next/navigation";
 import { AuthCard } from "@/components/auth/AuthCard";
 import { SignupForm } from "@/components/auth/SignupForm";
 import { SocialAuthButtons } from "@/components/auth/SocialAuthButtons";
 import { AuthDivider } from "@/components/auth/AuthDivider";
+import { createClient } from "@/lib/supabase/server";
 
-export default function SignupPage() {
+export default async function SignupPage() {
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+
+  if (user) {
+    redirect("/dashboard");
+  }
+
   return (
     <AuthCard
       title="Join the Challenge"

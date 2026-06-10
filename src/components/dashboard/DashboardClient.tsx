@@ -30,15 +30,16 @@ export function DashboardClient({
   return (
     <div className="space-y-6">
       <div className="grid gap-6 lg:grid-cols-2">
-        <GlobalGoalsCard initial={initialStats} />
+        <GlobalGoalsCard stats={stats} />
         <PersonalProgress kmRun={Number(liveUserKm)} totalGoals={stats.total_goals} />
       </div>
 
       <div className="grid gap-6 lg:grid-cols-2">
         <LogRunForm />
         <Leaderboard
-          initial={initialLeaderboard}
+          entries={leaderboard}
           currentUserId={currentUserId}
+          totalGoals={stats.total_goals}
         />
       </div>
     </div>

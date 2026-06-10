@@ -20,7 +20,7 @@ export function DashboardNav({ displayName }: DashboardNavProps) {
           <span>{APP_NAME}</span>
         </Link>
         <div className="flex items-center gap-4">
-          <span className="hidden text-sm text-goal-muted sm:inline">
+          <span className="max-w-[8rem] truncate text-sm text-goal-muted sm:max-w-none">
             {displayName}
           </span>
           <form action={signOut}>
