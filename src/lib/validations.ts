@@ -14,12 +14,20 @@ export const signInSchema = z.object({
   password: z.string().min(6, "Password must be at least 6 characters"),
 });
 
-export const signUpSchema = signInSchema.extend({
-  display_name: z
-    .string()
-    .min(2, "Display name must be at least 2 characters")
-    .max(50, "Display name must be at most 50 characters"),
-});
+export const signUpSchema = z
+  .object({
+    email: z.string().email("Invalid email address"),
+    password: z.string().min(6, "Password must be at least 6 characters"),
+    confirmPassword: z.string().min(6, "Password must be at least 6 characters"),
+    display_name: z
+      .string()
+      .min(2, "Display name must be at least 2 characters")
+      .max(50, "Display name must be at most 50 characters"),
+  })
+  .refine((data) => data.password === data.confirmPassword, {
+    message: "Passwords do not match",
+    path: ["confirmPassword"],
+  });
 
 /** @deprecated Use signInSchema or signUpSchema */
 export const authSchema = signInSchema;

@@ -37,6 +37,12 @@ export function SignupForm() {
         </label>
         <Input id="password" name="password" type="password" required minLength={6} />
       </div>
+      <div>
+        <label htmlFor="confirmPassword" className="mb-1.5 block text-sm text-goal-muted">
+          Confirm password
+        </label>
+        <Input id="confirmPassword" name="confirmPassword" type="password" required minLength={6} />
+      </div>
 
       {state?.error && (
         <p className="text-sm text-red-400">{state.error}</p>

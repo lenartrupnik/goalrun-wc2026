@@ -30,6 +30,7 @@ export async function signUpWithEmail(formData: FormData) {
   const parsed = signUpSchema.safeParse({
     email: formData.get("email"),
     password: formData.get("password"),
+    confirmPassword: formData.get("confirmPassword"),
     display_name: formData.get("display_name"),
   });
 
@@ -45,6 +46,7 @@ export async function signUpWithEmail(formData: FormData) {
     password,
     options: {
       data: { display_name: displayName },
+      emailRedirectTo: `${process.env.NEXT_PUBLIC_SITE_URL ?? "http://localhost:3000"}/auth/callback`,
     },
   });
 
