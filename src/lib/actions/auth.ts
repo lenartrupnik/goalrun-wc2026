@@ -52,6 +52,12 @@ export async function signUpWithEmail(formData: FormData) {
     return { error: error.message };
   }
 
+  // Supabase returns a user with no identities when the email is already registered
+  // (no confirmation email is sent — redirect instead of a misleading success message)
+  if (data.user && data.user.identities?.length === 0) {
+    redirect(`/login?email=${encodeURIComponent(email)}&from=signup`);
+  }
+
   // Email confirmation enabled — no session yet
   if (data.user && !data.session) {
     return {

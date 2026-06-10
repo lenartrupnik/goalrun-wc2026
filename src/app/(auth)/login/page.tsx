@@ -5,7 +5,12 @@ import { LoginForm } from "@/components/auth/LoginForm";
 // import { AuthDivider } from "@/components/auth/AuthDivider";
 import { createClient } from "@/lib/supabase/server";
 
-export default async function LoginPage() {
+export default async function LoginPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ email?: string; from?: string }>;
+}) {
+  const { email, from } = await searchParams;
   const supabase = await createClient();
   const {
     data: { user },
@@ -15,13 +20,18 @@ export default async function LoginPage() {
     redirect("/dashboard");
   }
 
+  const infoMessage =
+    from === "signup"
+      ? "An account with this email already exists. Please sign in."
+      : undefined;
+
   return (
     <AuthCard title="Welcome back" subtitle="Sign in to track your runs">
       {/* Re-enable when Google OAuth is configured in Supabase:
       <SocialAuthButtons />
       <AuthDivider />
       */}
-      <LoginForm />
+      <LoginForm defaultEmail={email} infoMessage={infoMessage} />
     </AuthCard>
   );
 }

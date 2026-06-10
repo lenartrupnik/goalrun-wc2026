@@ -6,7 +6,12 @@ import { signInWithEmail } from "@/lib/actions/auth";
 import { Input } from "@/components/ui/Input";
 import { Button } from "@/components/ui/Button";
 
-export function LoginForm() {
+interface LoginFormProps {
+  defaultEmail?: string;
+  infoMessage?: string;
+}
+
+export function LoginForm({ defaultEmail, infoMessage }: LoginFormProps = {}) {
   const [state, formAction, pending] = useActionState(
     async (_prev: { error?: string } | null, formData: FormData) => {
       return (await signInWithEmail(formData)) ?? null;
@@ -16,11 +21,21 @@ export function LoginForm() {
 
   return (
     <form action={formAction} className="space-y-4">
+      {infoMessage && (
+        <p className="text-sm text-pitch-300">{infoMessage}</p>
+      )}
       <div>
         <label htmlFor="email" className="mb-1.5 block text-sm text-goal-muted">
           Email
         </label>
-        <Input id="email" name="email" type="email" required placeholder="you@example.com" />
+        <Input
+          id="email"
+          name="email"
+          type="email"
+          required
+          placeholder="you@example.com"
+          defaultValue={defaultEmail}
+        />
       </div>
       <div>
         <label htmlFor="password" className="mb-1.5 block text-sm text-goal-muted">

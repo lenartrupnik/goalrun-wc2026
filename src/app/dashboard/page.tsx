@@ -1,4 +1,5 @@
 import { redirect } from "next/navigation";
+import { isPowerUser } from "@/lib/auth/power-user";
 import { createClient } from "@/lib/supabase/server";
 import { DashboardClient } from "@/components/dashboard/DashboardClient";
 import type { GlobalStats, LeaderboardEntry } from "@/types/database";
@@ -41,6 +42,7 @@ export default async function DashboardPage() {
       initialLeaderboard={(leaderboard as LeaderboardEntry[] | null) ?? []}
       userKmRun={userKmRun}
       currentUserId={user.id}
+      isPowerUser={isPowerUser(user.email)}
     />
   );
 }

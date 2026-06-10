@@ -4,6 +4,7 @@ import { GlobalGoalsCard } from "./GlobalGoalsCard";
 import { PersonalProgress } from "./PersonalProgress";
 import { LogRunForm } from "./LogRunForm";
 import { Leaderboard } from "./Leaderboard";
+import { PowerUserPanel } from "./PowerUserPanel";
 import { useGlobalStats } from "@/lib/hooks/useGlobalStats";
 import { useLeaderboard } from "@/lib/hooks/useLeaderboard";
 import type { GlobalStats, LeaderboardEntry } from "@/types/database";
@@ -13,6 +14,7 @@ interface DashboardClientProps {
   initialLeaderboard: LeaderboardEntry[];
   userKmRun: number;
   currentUserId: string;
+  isPowerUser: boolean;
 }
 
 export function DashboardClient({
@@ -20,6 +22,7 @@ export function DashboardClient({
   initialLeaderboard,
   userKmRun,
   currentUserId,
+  isPowerUser,
 }: DashboardClientProps) {
   const stats = useGlobalStats(initialStats);
   const leaderboard = useLeaderboard(initialLeaderboard);
@@ -42,6 +45,8 @@ export function DashboardClient({
           totalGoals={stats.total_goals}
         />
       </div>
+
+      {isPowerUser && <PowerUserPanel />}
     </div>
   );
 }
