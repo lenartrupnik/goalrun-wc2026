@@ -38,8 +38,8 @@ A production-ready, open-source running challenge app for FIFA World Cup 2026. F
 ### 1. Clone and install
 
 ```bash
-git clone <your-repo-url>
-cd WorldCupRunning
+git clone https://github.com/lenartrupnik/goalrun-wc2026.git
+cd goalrun-wc2026
 npm install
 ```
 
