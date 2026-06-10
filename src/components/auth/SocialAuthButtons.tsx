@@ -1,5 +1,8 @@
 "use client";
 
+// Disabled until Google provider is enabled in Supabase (Auth → Providers → Google).
+// Uncomment usage in login/page.tsx and signup/page.tsx when ready.
+
 import { signInWithGoogle } from "@/lib/actions/auth";
 import { Button } from "@/components/ui/Button";
 

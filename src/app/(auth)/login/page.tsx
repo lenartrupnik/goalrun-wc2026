@@ -1,8 +1,8 @@
 import { redirect } from "next/navigation";
 import { AuthCard } from "@/components/auth/AuthCard";
 import { LoginForm } from "@/components/auth/LoginForm";
-import { SocialAuthButtons } from "@/components/auth/SocialAuthButtons";
-import { AuthDivider } from "@/components/auth/AuthDivider";
+// import { SocialAuthButtons } from "@/components/auth/SocialAuthButtons";
+// import { AuthDivider } from "@/components/auth/AuthDivider";
 import { createClient } from "@/lib/supabase/server";
 
 export default async function LoginPage() {
@@ -17,8 +17,10 @@ export default async function LoginPage() {
 
   return (
     <AuthCard title="Welcome back" subtitle="Sign in to track your runs">
+      {/* Re-enable when Google OAuth is configured in Supabase:
       <SocialAuthButtons />
       <AuthDivider />
+      */}
       <LoginForm />
     </AuthCard>
   );

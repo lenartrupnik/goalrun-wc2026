@@ -1,8 +1,8 @@
 import { redirect } from "next/navigation";
 import { AuthCard } from "@/components/auth/AuthCard";
 import { SignupForm } from "@/components/auth/SignupForm";
-import { SocialAuthButtons } from "@/components/auth/SocialAuthButtons";
-import { AuthDivider } from "@/components/auth/AuthDivider";
+// import { SocialAuthButtons } from "@/components/auth/SocialAuthButtons";
+// import { AuthDivider } from "@/components/auth/AuthDivider";
 import { createClient } from "@/lib/supabase/server";
 
 export default async function SignupPage() {
@@ -20,8 +20,10 @@ export default async function SignupPage() {
       title="Join the Challenge"
       subtitle="Every goal scored = 1 km you need to run"
     >
+      {/* Re-enable when Google OAuth is configured in Supabase:
       <SocialAuthButtons />
       <AuthDivider />
+      */}
       <SignupForm />
     </AuthCard>
   );
