@@ -2,7 +2,7 @@ import { redirect } from "next/navigation";
 import { isPowerUser } from "@/lib/auth/power-user";
 import { createClient } from "@/lib/supabase/server";
 import { DashboardClient } from "@/components/dashboard/DashboardClient";
-import type { GlobalStats, LeaderboardEntry } from "@/types/database";
+import type { GlobalStats, LeaderboardEntry, Run } from "@/types/database";
 
 export default async function DashboardPage() {
   const supabase = await createClient();
@@ -19,14 +19,16 @@ export default async function DashboardPage() {
     supabase.from("leaderboard").select("*").order("rank", { ascending: true }).limit(50),
   ]);
 
-  // Calculate user's total km from runs
-  const { data: userRuns } = await supabase
+  // Fetch user's runs for total km + the editable previous runs table
+  const { data: myRunsData } = await supabase
     .from("runs")
-    .select("distance_km")
-    .eq("user_id", user.id);
+    .select("*")
+    .eq("user_id", user.id)
+    .order("run_date", { ascending: false })
+    .order("created_at", { ascending: false });
 
   const userKmRun =
-    userRuns?.reduce((sum, r) => sum + Number(r.distance_km), 0) ?? 0;
+    myRunsData?.reduce((sum, r) => sum + Number(r.distance_km), 0) ?? 0;
 
   const defaultStats = {
     id: 1,
@@ -40,6 +42,7 @@ export default async function DashboardPage() {
     <DashboardClient
       initialStats={(stats as GlobalStats | null) ?? defaultStats}
       initialLeaderboard={(leaderboard as LeaderboardEntry[] | null) ?? []}
+      initialMyRuns={(myRunsData as Run[] | null) ?? []}
       userKmRun={userKmRun}
       currentUserId={user.id}
       isPowerUser={isPowerUser(user.email)}

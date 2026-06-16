@@ -9,6 +9,11 @@ export const logRunSchema = z.object({
   notes: z.string().max(500).optional(),
 });
 
+export const updateRunSchema = z.object({
+  distance_km: logRunSchema.shape.distance_km,
+  notes: logRunSchema.shape.notes,
+});
+
 export const signInSchema = z.object({
   email: z.string().email("Invalid email address"),
   password: z.string().min(6, "Password must be at least 6 characters"),
@@ -33,6 +38,7 @@ export const signUpSchema = z
 export const authSchema = signInSchema;
 
 export type LogRunInput = z.infer<typeof logRunSchema>;
+export type UpdateRunInput = z.infer<typeof updateRunSchema>;
 export type SignInInput = z.infer<typeof signInSchema>;
 export type SignUpInput = z.infer<typeof signUpSchema>;
 export type AuthInput = SignInInput;

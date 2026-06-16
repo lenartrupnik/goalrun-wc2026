@@ -4,7 +4,8 @@ import { revalidatePath } from "next/cache";
 import { isPowerUser } from "@/lib/auth/power-user";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { createClient } from "@/lib/supabase/server";
-import { logRunSchema } from "@/lib/validations";
+import { logRunSchema, updateRunSchema } from "@/lib/validations";
+import type { Run } from "@/types/database";
 
 const RESET_CONFIRMATION = "RESET";
 
@@ -126,4 +127,92 @@ export async function deleteAllRuns(formData: FormData) {
     deletedCount: count,
     message: `Deleted all ${count} run${count === 1 ? "" : "s"} from every account.`,
   };
+}
+
+export async function getMyRuns() {
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+
+  if (!user) {
+    return { error: "You must be logged in", data: null as null };
+  }
+
+  const { data, error } = await supabase
+    .from("runs")
+    .select("id, user_id, distance_km, run_date, notes, created_at, updated_at")
+    .eq("user_id", user.id)
+    .order("run_date", { ascending: false })
+    .order("created_at", { ascending: false })
+    .limit(200);
+
+  if (error) {
+    return { error: error.message, data: null as null };
+  }
+
+  return { data: (data ?? []) as Run[], error: null as null };
+}
+
+export async function updateMyRun(
+  runId: string,
+  input: { distance_km: number; notes?: string | null }
+) {
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+
+  if (!user) {
+    return { error: "You must be logged in" };
+  }
+
+  const parsed = updateRunSchema.safeParse({
+    distance_km: input.distance_km,
+    notes: input.notes ?? undefined,
+  });
+
+  if (!parsed.success) {
+    return { error: parsed.error.errors[0]?.message ?? "Invalid input" };
+  }
+
+  const { error } = await supabase
+    .from("runs")
+    .update({
+      distance_km: parsed.data.distance_km,
+      notes: parsed.data.notes ?? null,
+    })
+    .eq("id", runId)
+    .eq("user_id", user.id);
+
+  if (error) {
+    return { error: error.message };
+  }
+
+  revalidatePath("/dashboard");
+  return { success: true };
+}
+
+export async function deleteMyRun(runId: string) {
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+
+  if (!user) {
+    return { error: "You must be logged in" };
+  }
+
+  const { error } = await supabase
+    .from("runs")
+    .delete()
+    .eq("id", runId)
+    .eq("user_id", user.id);
+
+  if (error) {
+    return { error: error.message };
+  }
+
+  revalidatePath("/dashboard");
+  return { success: true };
 }

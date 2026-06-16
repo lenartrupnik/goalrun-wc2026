@@ -5,13 +5,16 @@ import { PersonalProgress } from "./PersonalProgress";
 import { LogRunForm } from "./LogRunForm";
 import { Leaderboard } from "./Leaderboard";
 import { PowerUserPanel } from "./PowerUserPanel";
+import { MyRunsTable } from "./MyRunsTable";
 import { useGlobalStats } from "@/lib/hooks/useGlobalStats";
 import { useLeaderboard } from "@/lib/hooks/useLeaderboard";
-import type { GlobalStats, LeaderboardEntry } from "@/types/database";
+import { useMyRuns } from "@/lib/hooks/useMyRuns";
+import type { GlobalStats, LeaderboardEntry, Run } from "@/types/database";
 
 interface DashboardClientProps {
   initialStats: GlobalStats;
   initialLeaderboard: LeaderboardEntry[];
+  initialMyRuns: Run[];
   userKmRun: number;
   currentUserId: string;
   isPowerUser: boolean;
@@ -20,12 +23,14 @@ interface DashboardClientProps {
 export function DashboardClient({
   initialStats,
   initialLeaderboard,
+  initialMyRuns,
   userKmRun,
   currentUserId,
   isPowerUser,
 }: DashboardClientProps) {
   const stats = useGlobalStats(initialStats);
   const leaderboard = useLeaderboard(initialLeaderboard);
+  const myRuns = useMyRuns(initialMyRuns, currentUserId);
 
   const liveUserKm =
     leaderboard.find((e) => e.user_id === currentUserId)?.km_run ?? userKmRun;
@@ -45,6 +50,8 @@ export function DashboardClient({
           totalGoals={stats.total_goals}
         />
       </div>
+
+      <MyRunsTable runs={myRuns.runs} userId={currentUserId} />
 
       {isPowerUser && <PowerUserPanel />}
     </div>

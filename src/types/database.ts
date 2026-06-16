@@ -40,6 +40,7 @@ export interface Database {
           run_date: string;
           notes: string | null;
           created_at: string;
+          updated_at: string;
         };
         Insert: {
           id?: string;
