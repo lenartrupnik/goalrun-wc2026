@@ -26,22 +26,10 @@ export function LogRunForm() {
     if (state?.success) {
       setShowSuccess(true);
       setShowConfetti(true);
-
-      if (activityType === 'bike') {
-        const roasts = [
-          "A bike ride? Seriously? That's what pussies do when they're too scared to actually run.",
-          "Bike logged. Half the distance, twice the shame. Real runners are laughing at you.",
-          "Wow, a bike instead of running. Bold choice for someone who clearly can't keep up.",
-          "Congratulations on your 'run'. The rest of us earned full credit like adults.",
-        ];
-        const randomRoast = roasts[Math.floor(Math.random() * roasts.length)];
-        toast(randomRoast, { duration: 6000 });
-      }
-
       const timer = setTimeout(() => setShowConfetti(false), 3000);
       return () => clearTimeout(timer);
     }
-  }, [state?.success, activityType]);
+  }, [state?.success]);
 
   const dismissSuccess = () => setShowSuccess(false);
 
@@ -55,7 +43,19 @@ export function LogRunForm() {
       <form
         action={formAction}
         className="mt-4 space-y-4"
-        onSubmit={() => setShowSuccess(false)}
+        onSubmit={() => {
+          setShowSuccess(false);
+          if (activityType === 'bike') {
+            const roasts = [
+              "A bike ride? Seriously? That's what pussies do when they're too scared to actually run.",
+              "Bike logged. Half the distance, twice the shame. Real runners are laughing at you.",
+              "Wow, a bike instead of running. Bold choice for someone who clearly can't keep up.",
+              "Congratulations on your 'run'. The rest of us earned full credit like adults.",
+            ];
+            const randomRoast = roasts[Math.floor(Math.random() * roasts.length)];
+            toast(randomRoast, { duration: 11000 });
+          }
+        }}
       >
         <div className="grid gap-4 sm:grid-cols-2">
           <div>
