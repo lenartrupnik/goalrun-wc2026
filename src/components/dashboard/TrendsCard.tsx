@@ -95,6 +95,10 @@ export function TrendsCard({ dailyGoals, runs }: TrendsCardProps) {
   const maxUserCum = Math.max(1, ...visibleData.map((p) => p.userCumKm));
   const maxGoalsCum = Math.max(1, ...visibleData.map((p) => p.goalsCum));
 
+  // Shared scale for the two cumulative lines only (so you can directly see the difference
+  // between "All scored goals" and "Kilometers ran"). Daily bars keep their own independent scale.
+  const maxCumScale = Math.max(1, maxGoalsCum, maxUserCum);
+
   // SVG sizing (logical units)
   const W = 720;
   const H = 200;
@@ -105,7 +109,7 @@ export function TrendsCard({ dailyGoals, runs }: TrendsCardProps) {
   const innerW = W - paddingLeft - paddingRight;
   const innerH = H - paddingTop - paddingBottom;
 
-  const barWidth = Math.max(3, Math.min(18, innerW / Math.max(1, chartData.length) - 4));
+  const barWidth = Math.max(3, Math.min(18, innerW / Math.max(1, visibleData.length) - 4));
 
   function xForIndex(i: number) {
     if (visibleData.length <= 1) return paddingLeft + innerW / 2;
@@ -116,12 +120,9 @@ export function TrendsCard({ dailyGoals, runs }: TrendsCardProps) {
     return paddingTop + innerH - (goals / maxDaily) * (innerH * 0.82);
   }
 
-  function yForUserCum(km: number) {
-    return paddingTop + innerH - (km / maxUserCum) * (innerH * 0.82);
-  }
-
-  function yForGoalsCum(cum: number) {
-    return paddingTop + innerH - (cum / maxGoalsCum) * (innerH * 0.82);
+  function yForSharedCum(value: number) {
+    // Used by both cumulative lines so their heights are comparable on one scale
+    return paddingTop + innerH - (value / maxCumScale) * (innerH * 0.82);
   }
 
   // Build bar + line geometry (only using data up to today)
@@ -135,7 +136,7 @@ export function TrendsCard({ dailyGoals, runs }: TrendsCardProps) {
   const userLinePoints = visibleData
     .map((p, i) => {
       const x = xForIndex(i);
-      const y = yForUserCum(p.userCumKm);
+      const y = yForSharedCum(p.userCumKm);
       return `${x},${y}`;
     })
     .join(" ");
@@ -143,7 +144,7 @@ export function TrendsCard({ dailyGoals, runs }: TrendsCardProps) {
   const goalsCumLinePoints = visibleData
     .map((p, i) => {
       const x = xForIndex(i);
-      const y = yForGoalsCum(p.goalsCum);
+      const y = yForSharedCum(p.goalsCum);
       return `${x},${y}`;
     })
     .join(" ");
@@ -156,7 +157,7 @@ export function TrendsCard({ dailyGoals, runs }: TrendsCardProps) {
         <div>
           <h2 className="text-lg font-semibold">Trends</h2>
           <p className="mt-1 text-sm text-goal-muted">
-            Daily goals (bars) • Cumulative WC goals (dashed) • Your cumulative km (gold) — up to today only
+            Daily goals (bars) • All scored goals (dashed) • Kilometers ran (gold) — up to today only, same scale for the two lines
           </p>
         </div>
         <div className="hidden text-[10px] text-goal-muted sm:block">
@@ -180,11 +181,11 @@ export function TrendsCard({ dailyGoals, runs }: TrendsCardProps) {
               </div>
               <div className="flex items-center gap-1.5">
                 <div className="h-0.5 w-4 bg-[#5bc48a]" />
-                <span className="text-goal-muted">Cumulative goals (WC)</span>
+                <span className="text-goal-muted">All scored goals</span>
               </div>
               <div className="flex items-center gap-1.5">
                 <div className="h-0.5 w-4 bg-goal-gold" />
-                <span className="text-goal-muted">Your cumulative km</span>
+                <span className="text-goal-muted">Kilometers ran</span>
               </div>
             </div>
 
@@ -260,10 +261,10 @@ export function TrendsCard({ dailyGoals, runs }: TrendsCardProps) {
                   />
                 )}
 
-                {/* Dots for cumulative goals line */}
+                {/* Dots for "All scored goals" cumulative line */}
                 {visibleData.map((p, idx) => {
                   const x = xForIndex(idx);
-                  const y = yForGoalsCum(p.goalsCum);
+                  const y = yForSharedCum(p.goalsCum);
                   const isActive = hoveredIndex === idx;
                   return (
                     <g
@@ -284,10 +285,10 @@ export function TrendsCard({ dailyGoals, runs }: TrendsCardProps) {
                   );
                 })}
 
-                {/* Dots for user's km line */}
+                {/* Dots for "Kilometers ran" cumulative line */}
                 {visibleData.map((p, idx) => {
                   const x = xForIndex(idx);
-                  const y = yForUserCum(p.userCumKm);
+                  const y = yForSharedCum(p.userCumKm);
                   const isActive = hoveredIndex === idx;
                   return (
                     <g
@@ -334,9 +335,9 @@ export function TrendsCard({ dailyGoals, runs }: TrendsCardProps) {
                 <span className="mx-2 text-pitch-400">·</span>
                 <span className="text-pitch-300">{hovered.dailyGoals} goals</span>
                 <span className="mx-2 text-pitch-400">·</span>
-                <span className="text-[#5bc48a]">{hovered.goalsCum} WC cum</span>
+                <span className="text-[#5bc48a]">{hovered.goalsCum} All scored goals</span>
                 <span className="mx-2 text-pitch-400">·</span>
-                <span className="text-goal-gold">{hovered.userCumKm.toFixed(hovered.userCumKm % 1 === 0 ? 0 : 1)} km cum</span>
+                <span className="text-goal-gold">{hovered.userCumKm.toFixed(hovered.userCumKm % 1 === 0 ? 0 : 1)} Kilometers ran</span>
               </div>
             )}
 
@@ -355,7 +356,7 @@ export function TrendsCard({ dailyGoals, runs }: TrendsCardProps) {
       </div>
 
       <p className="mt-3 text-[10px] leading-snug text-goal-muted">
-        Bars = daily goals scored. Dashed green line = cumulative goals in the tournament so far (rising total). Gold line = your personal cumulative km. The chart only goes up to today and grows daily as matches are played and you log runs.
+        Bars = daily goals scored. Dashed green line = All scored goals (cumulative total in the tournament). Gold line = Kilometers ran (your personal cumulative). Both cumulative lines share the same scale so you can directly see the difference. Chart only goes up to today.
       </p>
     </Card>
   );
