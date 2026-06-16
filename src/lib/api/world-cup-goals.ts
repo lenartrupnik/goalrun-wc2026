@@ -31,27 +31,60 @@ export async function fetchTournamentStats(): Promise<TournamentStats> {
   return { totalGoals, matchesPlayed, matchCount: games.length };
 }
 
-/** Normalize "MM/DD/YYYY HH:mm" (or similar) or already "YYYY-MM-DD" to "YYYY-MM-DD" */
+/** 
+ * Normalize a local_date like "06/13/2026 21:00" (or "MM/DD/YYYY" or ISO)
+ * to YYYY-MM-DD **as experienced in Ljubljana, Slovenia (Europe/Ljubljana)**.
+ * 
+ * We parse the wall time components, create an instant (treating numbers as UTC wall time for conversion),
+ * then use Intl to get the calendar date in Ljubljana TZ. This ensures daily goal buckets
+ * ("goals scored trend by day") and the "up to today" cutoff are correct for Slovenian time.
+ */
 function normalizeToYMD(input: string): string {
   if (!input) return "";
-  // Already ISO-like date
+
+  // Already ISO-like
   if (/^\d{4}-\d{2}-\d{2}/.test(input)) {
     return input.slice(0, 10);
   }
-  // From "06/13/2026 21:00" or "06/13/2026"
-  const datePart = input.split(" ")[0];
-  const parts = datePart.split("/");
-  if (parts.length === 3) {
-    const [m, d, y] = parts;
-    return `${y}-${m.padStart(2, "0")}-${d.padStart(2, "0")}`;
+
+  // Parse "MM/DD/YYYY HH:mm" or "MM/DD/YYYY"
+  const match = input.match(/^(\d{2})\/(\d{2})\/(\d{4})(?:\s+(\d{2}):(\d{2}))?/);
+  if (match) {
+    const [, m, d, y, hh = '00', mm = '00'] = match;
+
+    // Create a UTC instant from the wall-time numbers in the string.
+    // Then ask Intl what the date is in Ljubljana time zone.
+    const utcMs = Date.UTC(
+      parseInt(y, 10),
+      parseInt(m, 10) - 1,
+      parseInt(d, 10),
+      parseInt(hh, 10),
+      parseInt(mm, 10)
+    );
+
+    const ljDate = new Intl.DateTimeFormat('en-CA', {
+      timeZone: 'Europe/Ljubljana',
+      year: 'numeric',
+      month: '2-digit',
+      day: '2-digit',
+    }).format(new Date(utcMs));
+
+    return ljDate; // already in YYYY-MM-DD
   }
-  // Fallback: try Date
+
+  // Fallback: parse whatever we can, then project the instant into Ljubljana TZ
   try {
     const dt = new Date(input);
     if (!isNaN(dt.getTime())) {
-      return dt.toISOString().slice(0, 10);
+      return new Intl.DateTimeFormat('en-CA', {
+        timeZone: 'Europe/Ljubljana',
+        year: 'numeric',
+        month: '2-digit',
+        day: '2-digit',
+      }).format(dt);
     }
   } catch {}
+
   return "";
 }
 

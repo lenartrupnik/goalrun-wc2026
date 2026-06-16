@@ -85,9 +85,15 @@ export function TrendsCard({ dailyGoals, runs }: TrendsCardProps) {
     });
   }, [dailyGoals, userCumByDate, goalsCumByDate]);
 
-  // Only show data up to "today" (real calendar date). This makes the chart update daily
-  // and avoids showing future WC matches that haven't happened yet.
-  const todayYMD = new Date().toISOString().slice(0, 10);
+  // Only show data up to "today" in Ljubljana (Europe/Ljubljana) timezone.
+  // This ensures the goals trend + km cumulative view is aligned to Slovenian time,
+  // and the chart "grows" at the correct local midnight.
+  const todayYMD = new Intl.DateTimeFormat('en-CA', {
+    timeZone: 'Europe/Ljubljana',
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit',
+  }).format(new Date());
   const visibleData = chartData.filter((p) => p.date <= todayYMD);
 
   const hasData = visibleData.length > 0;
