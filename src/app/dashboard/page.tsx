@@ -2,7 +2,9 @@ import { redirect } from "next/navigation";
 import { isPowerUser } from "@/lib/auth/power-user";
 import { createClient } from "@/lib/supabase/server";
 import { DashboardClient } from "@/components/dashboard/DashboardClient";
+import { fetchDailyGoalTrends } from "@/lib/api/world-cup-goals";
 import type { GlobalStats, LeaderboardEntry, Run } from "@/types/database";
+import type { DailyGoal } from "@/types/goals";
 
 export default async function DashboardPage() {
   const supabase = await createClient();
@@ -30,6 +32,9 @@ export default async function DashboardPage() {
   const userKmRun =
     myRunsData?.reduce((sum, r) => sum + Number(r.distance_km), 0) ?? 0;
 
+  // Daily goals for the Trends analytics card (computed from full games list)
+  const dailyGoals = await fetchDailyGoalTrends();
+
   const defaultStats = {
     id: 1,
     total_goals: 0,
@@ -43,6 +48,7 @@ export default async function DashboardPage() {
       initialStats={(stats as GlobalStats | null) ?? defaultStats}
       initialLeaderboard={(leaderboard as LeaderboardEntry[] | null) ?? []}
       initialMyRuns={(myRunsData as Run[] | null) ?? []}
+      initialDailyGoals={dailyGoals}
       userKmRun={userKmRun}
       currentUserId={user.id}
       isPowerUser={isPowerUser(user.email)}

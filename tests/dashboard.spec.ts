@@ -61,6 +61,7 @@ test.describe.skip("authenticated dashboard (requires test user + seeded runs)",
     await expect(page.getByRole("heading", { name: "Log a Run" })).toBeVisible();
     await expect(page.getByRole("heading", { name: "Leaderboard" })).toBeVisible();
     await expect(page.getByRole("heading", { name: "My Runs" })).toBeVisible();
+    await expect(page.getByRole("heading", { name: "Trends" })).toBeVisible();
 
     // The My Runs area should be scrollable (has inner scroll container)
     // This is a structural assertion that the new feature is present

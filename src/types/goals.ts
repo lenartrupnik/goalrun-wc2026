@@ -33,3 +33,8 @@ export interface GoalsSyncResult {
   source: "live" | "cached";
   goalsIncreased?: boolean;
 }
+
+export interface DailyGoal {
+  date: string; // normalized YYYY-MM-DD
+  goals: number;
+}
