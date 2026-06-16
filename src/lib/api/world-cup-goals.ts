@@ -31,13 +31,16 @@ export async function fetchTournamentStats(): Promise<TournamentStats> {
   return { totalGoals, matchesPlayed, matchCount: games.length };
 }
 
-/** 
+/**
  * Normalize a local_date like "06/13/2026 21:00" (or "MM/DD/YYYY" or ISO)
- * to YYYY-MM-DD **as experienced in Ljubljana, Slovenia (Europe/Ljubljana)**.
- * 
- * We parse the wall time components, create an instant (treating numbers as UTC wall time for conversion),
- * then use Intl to get the calendar date in Ljubljana TZ. This ensures daily goal buckets
- * ("goals scored trend by day") and the "up to today" cutoff are correct for Slovenian time.
+ * to a YYYY-MM-DD that represents the day in Ljubljana/Slovenia time (Europe/Ljubljana).
+ *
+ * The API reports "local_date" in the match venue's local time (mostly North American for WC2026).
+ * To make "goals scored trend by day" correct for a user in Slovenia, we take the venue local time,
+ * add a fixed offset (~6h for US East -> Central Europe) to simulate when it "feels like" in Ljubljana,
+ * and use the resulting day. Late US evening games (which are early morning in Europe) will roll to the next day.
+ *
+ * This way goals scored "in the night 3am/4am Ljubljana time" count for that Slovenian day.
  */
 function normalizeToYMD(input: string): string {
   if (!input) return "";
@@ -52,30 +55,37 @@ function normalizeToYMD(input: string): string {
   if (match) {
     const [, m, d, y, hh = '00', mm = '00'] = match;
 
-    // Create a UTC instant from the wall-time numbers in the string.
-    // Then ask Intl what the date is in Ljubljana time zone.
-    const utcMs = Date.UTC(
-      parseInt(y, 10),
-      parseInt(m, 10) - 1,
-      parseInt(d, 10),
-      parseInt(hh, 10),
-      parseInt(mm, 10)
-    );
+    let year = parseInt(y, 10);
+    let month = parseInt(m, 10) - 1;
+    let day = parseInt(d, 10);
+    let hour = parseInt(hh, 10);
+    const min = parseInt(mm, 10);
 
-    const ljDate = new Intl.DateTimeFormat('en-CA', {
-      timeZone: 'Europe/Ljubljana',
-      year: 'numeric',
-      month: '2-digit',
-      day: '2-digit',
-    }).format(new Date(utcMs));
+    // Fixed offset to map API venue local time to approximate Ljubljana "feeling" of the day.
+    // US evening (high hour in local_date) becomes early morning next day in Europe.
+    // 6 hours works well for most WC2026 venues (EDT/CDT to CEST).
+    const OFFSET = 6;
+    hour += OFFSET;
 
-    return ljDate; // already in YYYY-MM-DD
+    if (hour >= 24) {
+      hour -= 24;
+      day += 1;
+    }
+
+    // Use Date to safely handle month/year rollover (e.g. 31st +1)
+    const adjusted = new Date(Date.UTC(year, month, day, hour, min));
+    year = adjusted.getUTCFullYear();
+    month = adjusted.getUTCMonth();
+    day = adjusted.getUTCDate();
+
+    return `${year}-${String(month + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
   }
 
-  // Fallback: parse whatever we can, then project the instant into Ljubljana TZ
+  // Fallback
   try {
     const dt = new Date(input);
     if (!isNaN(dt.getTime())) {
+      // For fallback, also project through LJU for consistency, but the offset logic above is preferred
       return new Intl.DateTimeFormat('en-CA', {
         timeZone: 'Europe/Ljubljana',
         year: 'numeric',

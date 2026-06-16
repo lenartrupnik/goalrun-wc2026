@@ -30,19 +30,29 @@ export function normalizeToYMD(input: string): string {
   const match = input.match(/^(\d{2})\/(\d{2})\/(\d{4})(?:\s+(\d{2}):(\d{2}))?/);
   if (match) {
     const [, m, d, y, hh = '00', mm = '00'] = match;
-    const utcMs = Date.UTC(
-      parseInt(y, 10),
-      parseInt(m, 10) - 1,
-      parseInt(d, 10),
-      parseInt(hh, 10),
-      parseInt(mm, 10)
-    );
-    return new Intl.DateTimeFormat('en-CA', {
-      timeZone: 'Europe/Ljubljana',
-      year: 'numeric',
-      month: '2-digit',
-      day: '2-digit',
-    }).format(new Date(utcMs));
+
+    let year = parseInt(y, 10);
+    let month = parseInt(m, 10) - 1;
+    let day = parseInt(d, 10);
+    let hour = parseInt(hh, 10);
+    const min = parseInt(mm, 10);
+
+    // Fixed offset to map API venue local time to approximate Ljubljana "feeling" of the day.
+    // US evening (high hour in local_date) becomes early morning next day in Europe.
+    const OFFSET = 6;
+    hour += OFFSET;
+
+    if (hour >= 24) {
+      hour -= 24;
+      day += 1;
+    }
+
+    const adjusted = new Date(Date.UTC(year, month, day, hour, min));
+    year = adjusted.getUTCFullYear();
+    month = adjusted.getUTCMonth();
+    day = adjusted.getUTCDate();
+
+    return `${year}-${String(month + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
   }
 
   try {
