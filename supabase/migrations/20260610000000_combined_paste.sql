@@ -25,7 +25,8 @@ CREATE TABLE IF NOT EXISTS public.profiles (
 CREATE TABLE IF NOT EXISTS public.runs (
   id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
   user_id UUID NOT NULL REFERENCES public.profiles(id) ON DELETE CASCADE,
-  distance_km NUMERIC(6, 2) NOT NULL CHECK (distance_km > 0 AND distance_km <= 999),
+  distance_km NUMERIC(8, 2) NOT NULL,
+  activity_type TEXT NOT NULL DEFAULT 'run' CHECK (activity_type IN ('run', 'bike')),
   run_date DATE NOT NULL DEFAULT CURRENT_DATE,
   notes TEXT,
   created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
@@ -103,14 +104,14 @@ WITH (security_invoker = true)
 AS
 SELECT
   ROW_NUMBER() OVER (
-    ORDER BY COALESCE(SUM(r.distance_km), 0) DESC,
+    ORDER BY COALESCE(SUM(CASE WHEN r.activity_type = 'bike' THEN r.distance_km * 0.5 ELSE r.distance_km END), 0) DESC,
              MAX(r.created_at) DESC NULLS LAST,
              p.display_name ASC
   )::INTEGER AS rank,
   p.id AS user_id,
   p.display_name AS name,
   p.avatar_url,
-  COALESCE(SUM(r.distance_km), 0)::NUMERIC(10, 2) AS km_run,
+  COALESCE(SUM(CASE WHEN r.activity_type = 'bike' THEN r.distance_km * 0.5 ELSE r.distance_km END), 0)::NUMERIC(10, 2) AS km_run,
   CASE
     WHEN gs.total_goals = 0 THEN 0::NUMERIC(5, 2)
     ELSE LEAST(
@@ -134,7 +135,7 @@ SELECT
   gs.matches_played,
   gs.last_goal_at,
   gs.updated_at,
-  COALESCE(SUM(r.distance_km), 0)::NUMERIC(10, 2) AS total_km_logged,
+  COALESCE(SUM(CASE WHEN r.activity_type = 'bike' THEN r.distance_km * 0.5 ELSE r.distance_km END), 0)::NUMERIC(10, 2) AS total_km_logged,
   (gs.total_goals * 1)::INTEGER AS total_km_required,
   CASE
     WHEN gs.total_goals = 0 THEN 0::NUMERIC(5, 2)

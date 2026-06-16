@@ -79,7 +79,7 @@ WITH user_totals AS (
     p.id AS user_id,
     p.display_name,
     p.avatar_url,
-    COALESCE(SUM(r.distance_km), 0)::NUMERIC(10, 2) AS total_km,
+    COALESCE(SUM(CASE WHEN r.activity_type = 'bike' THEN r.distance_km * 0.5 ELSE r.distance_km END), 0)::NUMERIC(10, 2) AS total_km,
     COUNT(r.id)::BIGINT AS run_count,
     MAX(r.run_date) AS last_run_date
   FROM public.profiles p
@@ -157,7 +157,7 @@ CREATE OR REPLACE VIEW public.community_progress
 WITH (security_invoker = true)
 AS
 SELECT
-  COALESCE(SUM(r.distance_km), 0)::NUMERIC(12, 2) AS community_km_run,
+  COALESCE(SUM(CASE WHEN r.activity_type = 'bike' THEN r.distance_km * 0.5 ELSE r.distance_km END), 0)::NUMERIC(12, 2) AS community_km_run,
   gs.total_goals AS wc_goal_target,
   COUNT(DISTINCT r.user_id)::INTEGER AS active_runners,
   CASE

@@ -34,7 +34,7 @@ export function PersonalProgress({ kmRun, totalGoals }: PersonalProgressProps) {
           <div className="flex items-center gap-3">
             <Footprints className="h-5 w-5 text-pitch-300" />
             <div>
-              <p className="text-sm text-goal-muted">Km run</p>
+              <p className="text-sm text-goal-muted">Effective km</p>
               <p className="text-xl font-bold">{formatKm(kmRun)}</p>
             </div>
           </div>

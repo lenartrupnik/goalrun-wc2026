@@ -7,11 +7,13 @@ export const logRunSchema = z.object({
     .max(999, "Maximum 999 km"),
   run_date: z.string().min(1, "Date is required"),
   notes: z.string().max(500).optional(),
+  activity_type: z.enum(['run', 'bike']).default('run'),
 });
 
 export const updateRunSchema = z.object({
   distance_km: logRunSchema.shape.distance_km,
   notes: logRunSchema.shape.notes,
+  activity_type: z.enum(['run', 'bike']).optional(),
 });
 
 export const signInSchema = z.object({

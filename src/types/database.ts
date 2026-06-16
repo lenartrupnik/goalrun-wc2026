@@ -41,6 +41,7 @@ export interface Database {
           notes: string | null;
           created_at: string;
           updated_at: string;
+          activity_type: 'run' | 'bike';
         };
         Insert: {
           id?: string;
@@ -49,11 +50,13 @@ export interface Database {
           run_date?: string;
           notes?: string | null;
           created_at?: string;
+          activity_type?: 'run' | 'bike';
         };
         Update: {
           distance_km?: number;
           run_date?: string;
           notes?: string | null;
+          activity_type?: 'run' | 'bike';
         };
         Relationships: [
           {

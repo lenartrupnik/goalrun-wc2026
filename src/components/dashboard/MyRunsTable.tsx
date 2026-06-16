@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState, useTransition } from "react";
-import { Pencil, Trash2, Check, X } from "lucide-react";
+import { Pencil, Trash2, Check, X, Bike, Footprints } from "lucide-react";
 import { toast } from "sonner";
 import { formatDate } from "@/lib/utils";
 import { Card } from "@/components/ui/Card";
@@ -19,6 +19,7 @@ interface EditState {
   id: string;
   distance_km: string;
   notes: string;
+  activity_type: 'run' | 'bike';
 }
 
 export function MyRunsTable({ runs, userId }: MyRunsTableProps) {
@@ -36,6 +37,7 @@ export function MyRunsTable({ runs, userId }: MyRunsTableProps) {
       id: run.id,
       distance_km: String(run.distance_km),
       notes: run.notes ?? "",
+      activity_type: (run.activity_type as 'run' | 'bike') || 'run',
     });
   };
 
@@ -62,6 +64,7 @@ export function MyRunsTable({ runs, userId }: MyRunsTableProps) {
               ...r,
               distance_km: dist,
               notes: editing.notes.trim() ? editing.notes.trim() : null,
+              activity_type: editing.activity_type,
             }
           : r
       )
@@ -74,6 +77,7 @@ export function MyRunsTable({ runs, userId }: MyRunsTableProps) {
       const result = await updateMyRun(toSave.id, {
         distance_km: dist,
         notes: toSave.notes.trim() ? toSave.notes.trim() : null,
+        activity_type: toSave.activity_type,
       });
 
       if (result?.error) {
@@ -107,7 +111,7 @@ export function MyRunsTable({ runs, userId }: MyRunsTableProps) {
     });
   };
 
-  const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
+  const handleKeyDown = (e: React.KeyboardEvent<HTMLElement>) => {
     if (e.key === "Enter") {
       e.preventDefault();
       handleSave();
@@ -123,7 +127,7 @@ export function MyRunsTable({ runs, userId }: MyRunsTableProps) {
         <div>
           <h2 className="text-lg font-semibold">My Runs</h2>
           <p className="mt-1 text-sm text-goal-muted">
-            Your previous runs. Edit km or notes if you made a mistake when logging.
+            Your previous activities. Edit distance or type (bikes count as half).
           </p>
         </div>
         <div className="text-xs text-goal-muted tabular-nums">
@@ -135,9 +139,9 @@ export function MyRunsTable({ runs, userId }: MyRunsTableProps) {
         <div className="max-h-[380px] overflow-auto">
           {localRuns.length === 0 ? (
             <div className="flex flex-col items-center justify-center py-10 text-center">
-              <p className="text-sm text-goal-muted">No runs logged yet.</p>
+              <p className="text-sm text-goal-muted">No activities logged yet.</p>
               <p className="mt-1 text-xs text-goal-muted">
-                Use the Log a Run form above — your entries will appear here instantly.
+                Use the Log Activity form above — runs and bikes will appear here (bikes ×½).
               </p>
             </div>
           ) : (
@@ -145,7 +149,8 @@ export function MyRunsTable({ runs, userId }: MyRunsTableProps) {
               <thead className="sticky top-0 z-10 bg-pitch-800">
                 <tr className="text-left text-goal-muted">
                   <th className="px-3 py-2.5 font-medium">Date</th>
-                  <th className="w-24 px-3 py-2.5 font-medium sm:w-28">Km</th>
+                  <th className="w-16 px-3 py-2.5 font-medium">Type</th>
+                  <th className="w-24 px-3 py-2.5 font-medium sm:w-28">Distance (km)</th>
                   <th className="px-3 py-2.5 font-medium">Notes</th>
                   <th className="w-20 px-2 py-2.5 text-right font-medium">Actions</th>
                 </tr>
@@ -154,6 +159,7 @@ export function MyRunsTable({ runs, userId }: MyRunsTableProps) {
                 {localRuns.map((run) => {
                   const isEditingThis = editing?.id === run.id;
                   const displayDate = formatDate(run.run_date);
+                  const isBike = (run.activity_type as 'run' | 'bike') === 'bike';
 
                   return (
                     <tr
@@ -162,6 +168,29 @@ export function MyRunsTable({ runs, userId }: MyRunsTableProps) {
                     >
                       <td className="whitespace-nowrap px-3 py-2.5 text-sm">
                         {displayDate}
+                      </td>
+
+                      <td className="px-3 py-2.5">
+                        {isEditingThis ? (
+                          <select
+                            value={editing!.activity_type}
+                            onChange={(e) =>
+                              setEditing((s) =>
+                                s ? { ...s, activity_type: e.target.value as 'run' | 'bike' } : null
+                              )
+                            }
+                            onKeyDown={handleKeyDown}
+                            className="h-8 rounded-pitch border border-pitch-700 bg-pitch-900 px-2 text-sm text-goal-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-pitch-400"
+                          >
+                            <option value="run">Run</option>
+                            <option value="bike">Bike</option>
+                          </select>
+                        ) : (
+                          <span className={`inline-flex items-center gap-1 rounded px-2 py-0.5 text-xs tabular-nums ${isBike ? 'bg-blue-900/60 text-blue-300' : 'bg-green-900/60 text-green-300'}`} title={isBike ? "although this is for pussies we can&apos;t do it otherwise" : undefined}>
+                            {isBike ? <Bike className="h-3 w-3" /> : <Footprints className="h-3 w-3" />}
+                            {isBike ? 'Bike' : 'Run'}
+                          </span>
+                        )}
                       </td>
 
                       <td className="px-3 py-2.5">
@@ -184,6 +213,7 @@ export function MyRunsTable({ runs, userId }: MyRunsTableProps) {
                         ) : (
                           <span className="font-medium tabular-nums">
                             {run.distance_km}
+                            {isBike && <span className="ml-1 text-[10px] text-goal-muted">×½</span>}
                           </span>
                         )}
                       </td>
@@ -274,7 +304,7 @@ export function MyRunsTable({ runs, userId }: MyRunsTableProps) {
       </div>
 
       <p className="mt-3 text-[10px] leading-snug text-goal-muted">
-        Tip: Editing km automatically updates your total progress and the live leaderboard via realtime.
+        Tip: Bike rides count as ½ km. Editing distance or type updates your effective total and leaderboard (after DB view refresh).
       </p>
     </Card>
   );

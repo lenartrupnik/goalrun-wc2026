@@ -22,12 +22,14 @@ export function TrendsCard({ dailyGoals, runs }: TrendsCardProps) {
   const [hoveredIndex, setHoveredIndex] = useState<number | null>(null);
 
   // Compute user's daily added km + cumulative from the live runs list (realtime friendly)
+  // Bikes count as 0.5× for effective distance / statistics
   const userCumByDate = useMemo(() => {
     const dailyMap = new Map<string, number>();
     for (const r of runs) {
       const d = r.run_date; // already YYYY-MM-DD
       if (!d) continue;
-      dailyMap.set(d, (dailyMap.get(d) ?? 0) + Number(r.distance_km));
+      const mult = (r.activity_type as 'run' | 'bike') === 'bike' ? 0.5 : 1;
+      dailyMap.set(d, (dailyMap.get(d) ?? 0) + Number(r.distance_km) * mult);
     }
     // sort dates
     const sortedDates = Array.from(dailyMap.keys()).sort();
@@ -191,7 +193,7 @@ export function TrendsCard({ dailyGoals, runs }: TrendsCardProps) {
               </div>
               <div className="flex items-center gap-1.5">
                 <div className="h-0.5 w-4 bg-goal-gold" />
-                <span className="text-goal-muted">Kilometers ran</span>
+                <span className="text-goal-muted">Your effective km (bikes ×½)</span>
               </div>
             </div>
 
@@ -362,7 +364,7 @@ export function TrendsCard({ dailyGoals, runs }: TrendsCardProps) {
       </div>
 
       <p className="mt-3 text-[10px] leading-snug text-goal-muted">
-        Bars = daily goals scored. Dashed green line = All scored goals (cumulative total in the tournament). Gold line = Kilometers ran (your personal cumulative). Both cumulative lines share the same scale so you can directly see the difference. Chart only goes up to today.
+        Bars = daily goals scored. Dashed green = All scored goals (tournament cumulative). Gold = Your effective km (runs ×1, bikes ×½, same scale for comparison). Only up to today in Ljubljana time.
       </p>
     </Card>
   );

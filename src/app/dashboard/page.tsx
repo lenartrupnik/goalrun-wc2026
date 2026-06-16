@@ -30,9 +30,15 @@ export default async function DashboardPage() {
     .order("created_at", { ascending: false });
 
   const userKmRun =
-    myRunsData?.reduce((sum, r) => sum + Number(r.distance_km), 0) ?? 0;
+    myRunsData?.reduce((sum, r) => {
+      const at = (r as any).activity_type || 'run';
+      const mult = at === 'bike' ? 0.5 : 1;
+      return sum + Number(r.distance_km) * mult;
+    }, 0) ?? 0;
 
-  // Daily goals for the Trends analytics card (computed from full games list)
+  // Daily goals for the Trends analytics card (computed from full games list).
+  // fetchDailyGoalTrends is defensive (catches network/fetch errors and returns []).
+  // This prevents the dashboard from crashing if the external WC API is down/unreachable.
   const dailyGoals = await fetchDailyGoalTrends();
 
   const defaultStats = {

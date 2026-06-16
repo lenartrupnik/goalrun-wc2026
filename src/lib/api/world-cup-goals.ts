@@ -102,29 +102,34 @@ function normalizeToYMD(input: string): string {
  *  Sorted ascending by date. Used for the Trends analytics card.
  */
 export async function fetchDailyGoalTrends(): Promise<DailyGoal[]> {
-  const res = await fetch(`${WORLDCUP_API_URL}/get/games`, {
-    headers: { Accept: "application/json" },
-    next: { revalidate: 60 }, // modest cache; the sync route protects write path
-  });
+  try {
+    const res = await fetch(`${WORLDCUP_API_URL}/get/games`, {
+      headers: { Accept: "application/json" },
+      next: { revalidate: 60 }, // modest cache; the sync route protects write path
+    });
 
-  if (!res.ok) {
-    throw new Error(`World Cup API failed: ${res.status}`);
+    if (!res.ok) {
+      throw new Error(`World Cup API failed: ${res.status}`);
+    }
+
+    const { games } = (await res.json()) as WorldCupGamesResponse;
+
+    const byDay = new Map<string, number>();
+
+    for (const g of games) {
+      const ymd = normalizeToYMD(g.local_date);
+      if (!ymd) continue;
+      const goals = parseInt(g.home_score, 10) + parseInt(g.away_score, 10);
+      byDay.set(ymd, (byDay.get(ymd) ?? 0) + goals);
+    }
+
+    const sorted: DailyGoal[] = Array.from(byDay.entries())
+      .sort(([a], [b]) => (a < b ? -1 : a > b ? 1 : 0))
+      .map(([date, goals]) => ({ date, goals }));
+
+    return sorted;
+  } catch (err) {
+    console.error("Failed to fetch daily goal trends (external API may be down/unreachable):", err);
+    return []; // graceful fallback so dashboard doesn't crash
   }
-
-  const { games } = (await res.json()) as WorldCupGamesResponse;
-
-  const byDay = new Map<string, number>();
-
-  for (const g of games) {
-    const ymd = normalizeToYMD(g.local_date);
-    if (!ymd) continue;
-    const goals = parseInt(g.home_score, 10) + parseInt(g.away_score, 10);
-    byDay.set(ymd, (byDay.get(ymd) ?? 0) + goals);
-  }
-
-  const sorted: DailyGoal[] = Array.from(byDay.entries())
-    .sort(([a], [b]) => (a < b ? -1 : a > b ? 1 : 0))
-    .map(([date, goals]) => ({ date, goals }));
-
-  return sorted;
 }

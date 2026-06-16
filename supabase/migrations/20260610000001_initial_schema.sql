@@ -32,14 +32,16 @@ CREATE TABLE public.runs (
   distance_km NUMERIC(8, 2) NOT NULL,
   run_date DATE NOT NULL DEFAULT (CURRENT_DATE),
   notes TEXT,
+  activity_type TEXT NOT NULL DEFAULT 'run',
   created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
   updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
   CONSTRAINT runs_distance_positive CHECK (distance_km > 0),
   CONSTRAINT runs_distance_max CHECK (distance_km <= 999.99),
-  CONSTRAINT runs_notes_length CHECK (notes IS NULL OR char_length(notes) <= 500)
+  CONSTRAINT runs_notes_length CHECK (notes IS NULL OR char_length(notes) <= 500),
+  CONSTRAINT runs_activity_type_check CHECK (activity_type IN ('run', 'bike'))
 );
 
-COMMENT ON TABLE public.runs IS 'Individual km logs submitted by runners';
+COMMENT ON TABLE public.runs IS 'Individual activity logs (runs full km, bike rides count ½ km toward totals/leaderboard)';
 
 CREATE INDEX runs_user_id_idx ON public.runs (user_id);
 CREATE INDEX runs_run_date_idx ON public.runs (run_date DESC);

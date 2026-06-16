@@ -36,6 +36,7 @@ export async function logRun(formData: FormData) {
     distance_km: parseFloat(formData.get("distance_km") as string),
     run_date: formData.get("run_date") as string,
     notes: (formData.get("notes") as string) || undefined,
+    activity_type: (formData.get("activity_type") as 'run' | 'bike') || 'run',
   });
 
   if (!parsed.success) {
@@ -47,6 +48,7 @@ export async function logRun(formData: FormData) {
     distance_km: parsed.data.distance_km,
     run_date: parsed.data.run_date,
     notes: parsed.data.notes ?? null,
+    activity_type: parsed.data.activity_type ?? 'run',
   });
 
   if (error) {
@@ -141,7 +143,7 @@ export async function getMyRuns() {
 
   const { data, error } = await supabase
     .from("runs")
-    .select("id, user_id, distance_km, run_date, notes, created_at, updated_at")
+    .select("id, user_id, distance_km, run_date, notes, created_at, updated_at, activity_type")
     .eq("user_id", user.id)
     .order("run_date", { ascending: false })
     .order("created_at", { ascending: false })
@@ -156,7 +158,7 @@ export async function getMyRuns() {
 
 export async function updateMyRun(
   runId: string,
-  input: { distance_km: number; notes?: string | null }
+  input: { distance_km: number; notes?: string | null; activity_type?: 'run' | 'bike' }
 ) {
   const supabase = await createClient();
   const {
@@ -170,18 +172,24 @@ export async function updateMyRun(
   const parsed = updateRunSchema.safeParse({
     distance_km: input.distance_km,
     notes: input.notes ?? undefined,
+    activity_type: input.activity_type,
   });
 
   if (!parsed.success) {
     return { error: parsed.error.errors[0]?.message ?? "Invalid input" };
   }
 
+  const updateData: any = {
+    distance_km: parsed.data.distance_km,
+    notes: parsed.data.notes ?? null,
+  };
+  if (parsed.data.activity_type) {
+    updateData.activity_type = parsed.data.activity_type;
+  }
+
   const { error } = await supabase
     .from("runs")
-    .update({
-      distance_km: parsed.data.distance_km,
-      notes: parsed.data.notes ?? null,
-    })
+    .update(updateData)
     .eq("id", runId)
     .eq("user_id", user.id);
 
